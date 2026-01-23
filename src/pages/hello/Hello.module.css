@@ -1,0 +1,22 @@
+.wrapper {
+    max-width: 500px;
+    width: 100%;
+    text-align: left;
+}
+
+.saveBtnArea {
+    text-align: center;
+    width: 100%;
+    padding-top: 1rem;
+}
+
+.saveBtnArea button {
+    width: 200px;
+}
+
+.spoilerButton {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 1rem;
+    cursor: pointer;
+}
