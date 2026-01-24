@@ -1,0 +1,83 @@
+/* Сетка альбомов */
+.albumGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    padding: 16px;
+}
+/* Обложка */
+.albumImageWrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    transition: transform 0.2s ease;
+    cursor: pointer;
+}
+
+/* Создаем слой наложения */
+.albumImageWrapper::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    pointer-events: none; /* Чтобы слой не мешал кликам */
+    z-index: 1
+}
+
+@media (hover: hover) {
+    .albumImageWrapper:hover {
+        transform: scale(1.05);
+        z-index: 5
+    }
+
+    .albumImageWrapper {
+        /* GPU ускорение для анимации */
+        will-change: transform;
+    }
+}
+
+.albumImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    z-index: 0;
+}
+
+/* Название альбома */
+.albumTitle {
+    position: absolute;
+    bottom: 0;
+
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    z-index: 2;
+}
+
+/* Лоадер */
+.loader {
+    height: 1px;
+}
+
+.loading {
+    text-align: center;
+    padding: 16px;
+    color: #666;
+    font-size: 14px;
+}
+
+.error {
+    padding: 16px;
+    color: red;
+    text-align: center;
+}

@@ -1,47 +1,89 @@
-import VkService, {type VkAlbum} from "../../services/Vk.ts";
-import LocalStorage from "../../services/LocalStorage.ts";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
+import VkService, {type VkAlbum} from "../../services/Vk";
+import localStorage from "../../services/LocalStorage";
+import classes from "./album.module.css";
+
+const LIMIT = 21;
+
+const vk = new VkService(
+    localStorage.getToken(),
+    localStorage.getGroupId()
+);
 
 export const Albums = () => {
     const [albums, setAlbums] = useState<VkAlbum[]>([]);
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [loading, setLoading] = useState(true);
+    const [hasMore, setHasMore] = useState(true);
+    const offsetRef = useRef(0);
+    const loaderRef = useRef<HTMLInputElement>(null);
+    const lockRequestRef = useRef(false);
+
+    const lockRequest = (value: boolean) => {
+        lockRequestRef.current = value;
+        setLoading(value);
+    }
+
+    // кладем метод loadAlbums внутрь useRef, так как он не будет изменяться в течение
+    // времени жизни компонента
+    const loadAlbums = useRef(() => {
+        if (lockRequestRef.current) return
+
+        lockRequest(true)
+
+        vk.getAlbums(LIMIT, offsetRef.current).then(newAlbums => {
+            setAlbums(prev => [...prev, ...newAlbums]);
+            offsetRef.current += LIMIT;
+            if (newAlbums.length < LIMIT) {
+                setHasMore(false);
+            }
+        })
+            .catch(e => setError(String(e)))
+            .finally(() => lockRequest(false));
+    });
 
     useEffect(() => {
-        const token = LocalStorage.getToken()
-        const groupId = LocalStorage.getGroupId()
-        const vk = new VkService(token, groupId)
-
-        vk.getAlbums().then((albums) => {
-            setAlbums(albums);
-            setLoading(false)
-        }).catch((e: Error) => {
-            setError(String(e))
-            setLoading(true)
-        })
+        loadAlbums.current()
     }, []);
 
-    if (loading) {
-        return <div>Loading...</div>;
-    }
+    // Infinite scroll
+    useEffect(() => {
+        if (!loaderRef.current) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) loadAlbums.current()
+            },
+            {rootMargin: "200px"}
+        );
+        observer.observe(loaderRef.current);
 
-    if (error.length > 0) {
-        return <div>Error: {error}</div>;
-    }
+        return () => observer.disconnect();
+    }, [loading, hasMore, loadAlbums]);
 
-    if (!albums.length) {
-        return <div>No albums found.</div>;
+    if (error) {
+        return <div className={classes.error}>Error: {error}</div>;
     }
 
     return (
-        <div>
-            {
-                albums.map((album) => {
-                    return (
-                        <div>{album.title}</div>
-                    )
-                })
-            }
-        </div>
+        <>
+            <div className={classes.albumGrid}>
+                {albums.map(album => (
+                    <div key={album.id} className={classes.albumImageWrapper}>
+                        <img
+                            src={vk.getAlbumThumb(album)}
+                            alt={album.title}
+                            className={classes.albumImage}
+                            loading="lazy"
+                        />
+                        <div className={classes.albumTitle}>
+                            {album.title}
+                        </div>
+                    </div>
+                ))}
+            </div>
+
+            {loading && <div className={classes.loading}>Loading…</div>}
+            {hasMore && <div ref={loaderRef} className={classes.loader}/>}
+        </>
     );
 };
