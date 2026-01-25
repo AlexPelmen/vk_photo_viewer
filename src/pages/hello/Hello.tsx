@@ -1,5 +1,5 @@
 import classes from "./Hello.module.css"
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import Eslint from "../../utils/eslint.ts";
 import LocalStorage from "../../services/LocalStorage.ts";
 import {useNavigate} from "react-router-dom";
@@ -8,6 +8,12 @@ const Hello = () => {
     const [token, setToken] = useState<string>("")
     const [groupId, setGroupId] = useState<number>(0)
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (LocalStorage.getToken() && LocalStorage.getGroupId()) {
+            navigate("/albums")
+        }
+    }, []);
 
     const onSubmit = () => {
         if (token.length && groupId) {

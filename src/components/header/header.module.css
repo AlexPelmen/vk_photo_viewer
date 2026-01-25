@@ -1,0 +1,11 @@
+.header {
+    width: 100%;
+    background-color: white;
+    text-align: right;
+    padding: 0.3rem;
+}
+
+.header button[name=logout] {
+    width: 100px;
+    padding: 0.5rem;
+}

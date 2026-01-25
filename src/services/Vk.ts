@@ -101,6 +101,16 @@ class VkService {
         return album.thumb_src || '';
     }
 
+    /** 🔍 Хелпер: достать ссылку на обложку фото */
+    getPhotoThumb(photo: VkPhoto): string {
+        if (photo.sizes && photo.sizes.length > 0) {
+            return [...photo.sizes]
+                .sort((a, b) => a.width - b.width)
+                .find(s => s.width > 250)?.url ?? ""
+        }
+        return '';
+    }
+
     /** 🔍 Вернуть самый большой размер фотки */
     getLargestPhotoUrl(photo: VkPhoto): string {
         const sorted = [...photo.sizes].sort((a, b) => b.width - a.width);
