@@ -5,6 +5,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import VkService, { type VkPhoto } from "../../services/Vk";
 import localStorage from "../../services/LocalStorage";
 import classes from "./photos.module.css";
+import {BackButton} from "../../components/back-button/BackButton.tsx";
 
 const LIMIT = 21;
 
@@ -61,6 +62,7 @@ export const Photos = () => {
 
     return (
         <>
+            <BackButton onClick={() => navigate("/albums")}/>
             <div className={classes.albumGrid}>
                 {data.pages.map((group, i) => (
                     <div key={i} style={{ display: 'contents' }}>

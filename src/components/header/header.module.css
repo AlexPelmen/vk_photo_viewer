@@ -1,11 +1,11 @@
 .header {
     position: fixed;
     display: flex;
-    justify-content: space-between;
+    justify-content: right;
     width: 100%;
     background-color: white;
     padding: 0.3rem;
-    opacity: 50%;
+    opacity: 30%;
     z-index: 1000;
 }
 
