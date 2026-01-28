@@ -3,17 +3,20 @@ import Hello from "./pages/hello/Hello.tsx";
 import {Albums} from "./pages/albums/Albums.tsx";
 import {Header} from "./components/header/Header.tsx";
 import {Photos} from "./pages/photos/Photos.tsx";
+import {FullsizePhoto} from "./pages/fullsize-photo/fullsize-photo.tsx";
 
-export const unauthedRoutes = createBrowserRouter([
-    {
-        path: "/",
-        element: <Hello/>,
-    },
-    {
-        path: "*",
-        element: <Navigate to="/" replace />,
-    },
-])
+export const getUnauthedRoutes = (login: (token: string, groupId: number) => void) => {
+ return createBrowserRouter([
+     {
+         path: "/",
+         element: <Hello login={login} />,
+     },
+     {
+         path: "*",
+         element: <Navigate to="/" replace />,
+     },
+ ])
+}
 
 export const getAuthedRoutes = (logout: () => void) => createBrowserRouter([
     {
@@ -32,6 +35,10 @@ export const getAuthedRoutes = (logout: () => void) => createBrowserRouter([
             {
                 path: "albums/:albumId",
                 element: <Photos />,
+            },
+            {
+                path: "albums/:albumId/:photoId",
+                element: <FullsizePhoto />,
             },
             // {
             //     // Обработка всех остальных путей внутри Header

@@ -35,8 +35,8 @@ interface VkResponse<T> {
 }
 
 class VkService {
-    private readonly token: string;
-    private readonly ownerId: number;
+    private token: string;
+    private ownerId: number;
     private readonly apiUrl = 'https://api.vk.com';
     private readonly version = '5.199';
 
@@ -44,6 +44,9 @@ class VkService {
         this.token = token;
         this.ownerId = -Math.abs(groupId);
     }
+
+    setToken = (token: string) => (this.token = token);
+    setOwnerId = (groupId: number) => (this.ownerId = -Math.abs(groupId));
 
     private async call<T>(method: string, params: Record<string, string | number | boolean>): Promise<T[]> {
         // Формируем полный URL правильно: apiUrl + / + method
@@ -111,10 +114,23 @@ class VkService {
         return '';
     }
 
-    /** 🔍 Вернуть самый большой размер фотки */
     getLargestPhotoUrl(photo: VkPhoto): string {
-        const sorted = [...photo.sizes].sort((a, b) => b.width - a.width);
-        return sorted[0].url;
+        const screenWidth = window.innerWidth;
+
+        const bestSize = photo.sizes.reduce((prev, curr) => {
+            // Если текущий размер подходит под экран и он больше предыдущего "подходящего"
+            // ИЛИ если мы еще не нашли ни одного размера меньше экрана
+            if (curr.width <= screenWidth && curr.width > (prev.width > screenWidth ? 0 : prev.width)) {
+                return curr;
+            }
+            // Если текущий меньше, а предыдущий уже был слишком большой — берем текущий как меньшее зло
+            if (prev.width > screenWidth && curr.width < prev.width) {
+                return curr;
+            }
+            return prev;
+        });
+
+        return bestSize.url;
     }
 }
 

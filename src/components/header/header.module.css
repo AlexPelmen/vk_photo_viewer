@@ -1,11 +1,28 @@
 .header {
+    position: fixed;
+    display: flex;
+    justify-content: space-between;
     width: 100%;
     background-color: white;
-    text-align: right;
     padding: 0.3rem;
+    opacity: 50%;
+    z-index: 1000;
 }
 
-.header button[name=logout] {
+.header button {
     width: 100px;
     padding: 0.5rem;
+    background: none;
+    border: none;
+    outline: none !important;
+    cursor: pointer;
+}
+
+.outlet {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 100vw;
+    height: 100vh;
 }

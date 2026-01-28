@@ -1,25 +1,18 @@
 import classes from "./Hello.module.css"
-import {useEffect, useState} from "react";
 import Eslint from "../../utils/eslint.ts";
-import LocalStorage from "../../services/LocalStorage.ts";
-import {useNavigate} from "react-router-dom";
+import {useState} from "react";
 
-const Hello = () => {
+type Props = {
+    login: (token: string, groupId: number) => void
+}
+
+const Hello = ({ login }: Props) => {
     const [token, setToken] = useState<string>("")
     const [groupId, setGroupId] = useState<number>(0)
-    const navigate = useNavigate();
-
-    useEffect(() => {
-        if (LocalStorage.getToken() && LocalStorage.getGroupId()) {
-            navigate("/albums")
-        }
-    }, []);
 
     const onSubmit = () => {
         if (token.length && groupId) {
-            LocalStorage.setToken(token)
-            LocalStorage.setGroupID(groupId)
-            navigate("/albums")
+            login(token, groupId)
         } else {
             console.error("wrong data")
         }

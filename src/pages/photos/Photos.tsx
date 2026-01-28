@@ -1,8 +1,10 @@
-import {useEffect, useRef, useState} from "react";
-import VkService, {type VkPhoto} from "../../services/Vk";
+import { useEffect, useRef } from "react";
+import {useNavigate, useParams} from "react-router-dom";
+import { useInfiniteQuery } from "@tanstack/react-query";
+
+import VkService, { type VkPhoto } from "../../services/Vk";
 import localStorage from "../../services/LocalStorage";
 import classes from "./photos.module.css";
-import {useParams} from "react-router-dom";
 
 const LIMIT = 21;
 
@@ -12,76 +14,79 @@ const vk = new VkService(
 );
 
 export const Photos = () => {
-    const [photos, setPhotos] = useState<VkPhoto[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
-    const [hasMore, setHasMore] = useState(true);
-    const offsetRef = useRef(0);
-    const loaderRef = useRef<HTMLInputElement>(null);
-    const lockRequestRef = useRef(false);
+    const { albumId } = useParams<{ albumId: string }>();
+    const loaderRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
+    const numericAlbumId = Number(albumId);
 
-    const albumId = Number(useParams().albumId);
+    vk.setToken(localStorage.getToken());
+    vk.setOwnerId(localStorage.getGroupId());
 
-    const lockRequest = (value: boolean) => {
-        lockRequestRef.current = value;
-        setLoading(value);
-    }
-
-    const loadPhotos = useRef(() => {
-        if (lockRequestRef.current) return
-
-        lockRequest(true)
-
-        vk.getPhotos(albumId, LIMIT, offsetRef.current).then(newPhotos => {
-            setPhotos(prev => [...prev, ...newPhotos]);
-            offsetRef.current += LIMIT;
-            if (newPhotos.length < LIMIT) {
-                setHasMore(false);
-            }
-        })
-            .catch(e => setError(String(e)))
-            .finally(() => lockRequest(false));
+    const {
+        data,
+        error,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        status,
+    } = useInfiniteQuery({
+        queryKey: ["vk-photos", numericAlbumId],
+        queryFn: ({ pageParam = 0 }) =>
+            vk.getPhotos(numericAlbumId, LIMIT, pageParam as number),
+        initialPageParam: 0,
+        getNextPageParam: (lastPage, allPages) => {
+            return lastPage.length < LIMIT ? undefined : allPages.length * LIMIT;
+        },
+        staleTime: 1000 * 60 * 10,
     });
 
+    // Универсальный слушатель скролла
     useEffect(() => {
-        loadPhotos.current()
-    }, []);
-
-    // Infinite scroll
-    useEffect(() => {
-        if (!loaderRef.current) return;
         const observer = new IntersectionObserver(
             ([entry]) => {
-                if (entry.isIntersecting) loadPhotos.current()
+                if (entry.isIntersecting && hasNextPage && !isFetchingNextPage) {
+                    fetchNextPage();
+                }
             },
-            {rootMargin: "200px"}
+            { rootMargin: "400px" } // Для фото можно взять отступ побольше, чтобы юзер не видел лоадеров
         );
-        observer.observe(loaderRef.current);
 
+        if (loaderRef.current) observer.observe(loaderRef.current);
         return () => observer.disconnect();
-    }, [loading, hasMore, loadPhotos]);
+    }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
-    if (error) {
-        return  <div className={classes.error}>Error: {error}</div>
-    }
+    if (status === "pending") return <div className={classes.loading}>Загрузка фото...</div>;
+    if (status === "error") return <div className={classes.error}>Ошибка: {error.message}</div>;
+
 
     return (
         <>
             <div className={classes.albumGrid}>
-                {photos.map(photo => (
-                    <div key={photo.id} className={classes.albumImageWrapper}>
-                        <img
-                            src={vk.getPhotoThumb(photo)}
-                            alt={photo.id.toString()}
-                            className={classes.albumImage}
-                            loading="lazy"
-                        />
+                {data.pages.map((group, i) => (
+                    <div key={i} style={{ display: 'contents' }}>
+                        {group.map((photo: VkPhoto) => (
+                            <div
+                                key={photo.id}
+                                className={classes.albumImageWrapper}
+                                onClick={() => navigate(`/albums/${albumId}/${photo.id}`)}
+                            >
+                                <img
+                                    src={vk.getPhotoThumb(photo)}
+                                    alt={photo.id.toString()}
+                                    className={classes.albumImage}
+                                    loading="lazy"
+                                />
+                            </div>
+                        ))}
                     </div>
                 ))}
             </div>
 
-            {loading && <div className={classes.loading}>Loading…</div>}
-            {hasMore && <div ref={loaderRef} className={classes.loader}/>}
+            {/* Индикация подгрузки новых рядов */}
+            {(isFetchingNextPage) && <div className={classes.loading}>Догружаем...</div>}
+
+            {/* Точка активации запроса */}
+            {hasNextPage && <div ref={loaderRef} style={{ height: '20px' }} />}
         </>
     );
 };
