@@ -1,7 +1,7 @@
 import classes from "./Hello.module.css"
 import Eslint from "../../utils/eslint.ts";
 import {useState} from "react";
-import {useNavigate} from "react-router-dom";
+
 
 type Props = {
     login: (token: string, groupId: number) => void
@@ -19,12 +19,11 @@ const params = {
     scope: 'photo',
 };
 
-const authLink = `https://oauth.vk.com${new URLSearchParams(params)}`;
+const authLink = `https://oauth.vk.com/oauth/authorize?${new URLSearchParams(params)}`;
 
-const Hello = ({ login }: Props) => {
+const Hello = ({login}: Props) => {
     const [token, setToken] = useState<string>("")
     const [groupId, setGroupId] = useState<number>(0)
-    const navigate = useNavigate();
 
     const onSubmit = () => {
         if (token.length && groupId) {
@@ -42,15 +41,23 @@ const Hello = ({ login }: Props) => {
         <details>
             <summary className={classes.spoilerButton}>Что тут происходит?</summary>
             <p>Мы давно с друзьями храним фото в приватной группе вк. Если ты тоже так делаешь, можешь использовать эту
-                страницу, чтобы быстро просматривать фото, которые хранятся в твоей приватной группе. Данные хранятся только
+                страницу, чтобы быстро просматривать фото, которые хранятся в твоей приватной группе. Данные хранятся
+                только
                 на твоем устройстве, можешь не переживать.</p>
 
             <p>К сожалению в последнее время интерфейс вк грузится долго и требует большого количества пользовательских
                 действий. Мне проще написать свой интерфейс, чем пользоваться тем, что предлагает вк.</p>
         </details>
 
-        <div style={{ display: "flex", justifyContent: "center", width: "100%", padding: "10rem 3rem" }}>
-            <button className="primary-button" onClick={() => navigate(authLink)}>Войти</button>
+        <div style={{display: "flex", justifyContent: "center", width: "100%", padding: "10rem 3rem"}}>
+            <button className="primary-button" onClick={() => {
+                window.location.href = "https://vk.com/groups"
+            }}>Авторизация VK
+            </button>
+            <button className="primary-button" onClick={() => {
+                window.location.href = authLink
+            }}>Войти
+            </button>
         </div>
 
         <details>
@@ -73,7 +80,7 @@ const Hello = ({ login }: Props) => {
             </label>
 
             <br/>
-            <hr />
+            <hr/>
 
             <div className={classes.saveBtnArea}>
                 <div>Сохранить в локальное хранилище и начать работу</div>
